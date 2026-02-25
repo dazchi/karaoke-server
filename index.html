@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <style>
+        .loader-dots { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #3273dc; animation: pulse 1s infinite; margin-left: 5px; }
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+    </style>
     <title>Karaoke AI Station</title>
 </head>
 <body>
@@ -14,37 +18,38 @@
             <div class="box">
                 <div class="field has-addons">
                     <div class="control is-expanded">
-                        <input id="url" class="input" type="text" placeholder="YouTube URL...">
+                        <input id="url" class="input" type="text" placeholder="Paste YouTube URL here...">
                     </div>
                     <div class="control">
                         <button onclick="startJob()" id="btn" class="button is-primary">Generate</button>
                     </div>
                 </div>
-                <div id="status-box" class="has-text-weight-bold has-text-info"></div>
+                <div id="status-container" class="notification is-light is-hidden">
+                    <span id="status-text"></span>
+                    <div class="loader-dots"></div>
+                </div>
             </div>
 
             <div id="results" style="display:none;">
                 <div class="columns">
                     <div class="column">
-                        <h3 class="subtitle">Instrumental Wave</h3>
+                        <h3 class="subtitle">Instrumental</h3>
                         <div id="waveform-inst"></div>
-                        <button onclick="waves['inst'].playPause()" class="button is-small mt-2">Play/Pause</button>
+                        <button onclick="waves['inst'].playPause()" class="button is-small mt-2 is-link">Play/Pause</button>
                     </div>
                     <div class="column">
-                        <h3 class="subtitle">Vocal Wave</h3>
+                        <h3 class="subtitle">Vocals</h3>
                         <div id="waveform-vocal"></div>
-                        <button onclick="waves['vocal'].playPause()" class="button is-small mt-2">Play/Pause</button>
+                        <button onclick="waves['vocal'].playPause()" class="button is-small mt-2 is-danger">Play/Pause</button>
                     </div>
                 </div>
-                
                 <hr>
-                <h3 class="title is-4">Final 2-Channel Video</h3>
-                <video id="final-video" controls style="width:100%"></video>
+                <h3 class="title is-4">Final Karaoke Video</h3>
+                <video id="final-video" controls style="width:100%; border-radius: 8px;"></video>
                 <a id="dl" class="button is-success is-fullwidth mt-4" download>Download Karaoke MP4</a>
             </div>
         </div>
     </section>
-
-    <script type="text/javascript" src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
