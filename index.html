@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <title>Karaoke AI Station</title>
+</head>
+<body>
+    <section class="section">
+        <div class="container">
+            <h1 class="title has-text-centered">🎤 Karaoke AI Station</h1>
+            
+            <div class="box">
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <input id="url" class="input" type="text" placeholder="YouTube URL...">
+                    </div>
+                    <div class="control">
+                        <button onclick="startJob()" id="btn" class="button is-primary">Generate</button>
+                    </div>
+                </div>
+                <div id="status-box" class="has-text-weight-bold has-text-info"></div>
+            </div>
+
+            <div id="results" style="display:none;">
+                <div class="columns">
+                    <div class="column">
+                        <h3 class="subtitle">Instrumental Wave</h3>
+                        <div id="waveform-inst"></div>
+                        <button onclick="waves['inst'].playPause()" class="button is-small mt-2">Play/Pause</button>
+                    </div>
+                    <div class="column">
+                        <h3 class="subtitle">Vocal Wave</h3>
+                        <div id="waveform-vocal"></div>
+                        <button onclick="waves['vocal'].playPause()" class="button is-small mt-2">Play/Pause</button>
+                    </div>
+                </div>
+                
+                <hr>
+                <h3 class="title is-4">Final 2-Channel Video</h3>
+                <video id="final-video" controls style="width:100%"></video>
+                <a id="dl" class="button is-success is-fullwidth mt-4" download>Download Karaoke MP4</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let waves = {};
+
+        async function startJob() {
+            const url = document.getElementById('url').value;
+            const res = await fetch('/process', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url})
+            });
+            const {job_id} = await res.json();
+            pollStatus(job_id);
+        }
+
+        function pollStatus(id) {
+            const timer = setInterval(async () => {
+                const res = await fetch(`/status/${id}`);
+                const job = await res.json();
+                document.getElementById('status-box').innerText = "Status: " + job.status;
+
+                if (job.status === "Complete") {
+                    clearInterval(timer);
+                    showResults(job.data);
+                } else if (job.status.startsWith("Error")) {
+                    clearInterval(timer);
+                    alert(job.status);
+                }
+            }, 2000);
+        }
+
+        function showResults(data) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('final-video').src = data.video;
+            document.getElementById('dl').href = data.video;
+
+            // Initialize Waves
+            initWave('inst', data.instrumental, '#waveform-inst', '#3273dc');
+            initWave('vocal', data.vocals, '#waveform-vocal', '#ff3860');
+        }
+
+        function initWave(key, url, container, color) {
+            if (waves[key]) waves[key].destroy();
+            waves[key] = WaveSurfer.create({
+                container: container,
+                waveColor: color,
+                progressColor: '#000',
+                url: url,
+                height: 80
+            });
+        }
+    </script>
+</body>
+</html>

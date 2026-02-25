@@ -1,0 +1,4 @@
+*.bak
+songs/
+tmp/
+.venv/
