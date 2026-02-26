@@ -1,0 +1,29 @@
+{
+  "title": "🎤 Karaoke AI Station",
+  "placeholder": "YouTube URL...",
+  "generate": "Generate",
+  "play_all": "Play All",
+  "pause_all": "Pause All",
+  "instrumental": "Instrumental",
+  "vocals": "Vocals",
+  "mute_inst": "Mute Inst",
+  "mute_vocals": "Mute Vocals",
+  "unmute": "Unmute",
+  "video_feed": "Video Feed (Muted)",
+  "dl_mp4": "Download MP4",
+  "status": {
+    "fetching_info": "Fetching video info...",
+    "downloading_audio": "Downloading audio from YouTube...",
+    "downloading_video": "Downloading video from YouTube...",
+    "ai_separation": "AI Separation (UVR MDX-Net)...",
+    "merging": "Merging audio channels...",
+    "complete": "Complete",
+    "waiting": "Waiting in queue (Position: {pos})",
+    "processing": "Processing now...",
+    "not_found": "Not Found",
+    "error": "Error"
+  },
+  "errors": {
+    "no_url": "Please enter a URL"
+  }
+}

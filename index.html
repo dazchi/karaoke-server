@@ -1,28 +1,70 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <style>
-        .loader-dots { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #3273dc; animation: pulse 1s infinite; margin-left: 5px; }
-        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-        .waveform-container { background: #f5f5f5; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .loader-dots {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3273dc;
+            animation: pulse 1s infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        .waveform-container {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .lang-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
     </style>
-    <title>Karaoke AI Station</title>
+    <title>{{ t.title }}</title>
 </head>
+
 <body>
+    <div class="select is-small lang-switcher">
+        <select onchange="window.location.search = '?lang=' + this.value;">
+            <option value="en" {% if current_lang=='en' %}selected{% endif %}>English</option>
+            <option value="zh_TW" {% if current_lang=='zh_TW' %}selected{% endif %}>繁體中文</option>
+        </select>
+    </div>
+
     <section class="section">
         <div class="container">
-            <h1 class="title has-text-centered">🎤 Karaoke AI Station</h1>
-            
+            <h1 class="title has-text-centered">{{ t.title }}</h1>
+
             <div class="box">
                 <div class="field has-addons">
                     <div class="control is-expanded">
-                        <input id="url" class="input" type="text" placeholder="YouTube URL...">
+                        <input id="url" class="input" type="text" placeholder="{{ t.placeholder }}">
                     </div>
                     <div class="control">
-                        <button onclick="startJob()" id="btn" class="button is-primary">Generate</button>
+                        <button onclick="startJob()" id="btn" class="button is-primary">{{ t.generate }}</button>
                     </div>
                 </div>
                 <div id="status-container" class="notification is-light is-hidden">
@@ -33,37 +75,45 @@
 
             <div id="results" style="display:none;">
                 <div class="buttons is-centered">
-                    <button id="master-play" onclick="togglePlayback()" class="button is-large is-success">Play All</button>
+                    <button id="master-play" onclick="togglePlayback()" class="button is-large is-success">{{ t.play_all
+                        }}</button>
                 </div>
 
                 <div class="columns">
                     <div class="column">
                         <div class="waveform-container">
-                            <h3 class="subtitle mb-2">Instrumental</h3>
+                            <h3 class="subtitle mb-2">{{ t.instrumental }}</h3>
                             <div id="waveform-inst"></div>
-                            <button id="mute-inst" onclick="toggleMute('inst')" class="button is-small is-link mt-2">Mute Inst</button>
+                            <button id="mute-inst" onclick="toggleMute('inst')" class="button is-small is-link mt-2">{{
+                                t.mute_inst }}</button>
                         </div>
                     </div>
                     <div class="column">
                         <div class="waveform-container">
-                            <h3 class="subtitle mb-2">Vocals</h3>
+                            <h3 class="subtitle mb-2">{{ t.vocals }}</h3>
                             <div id="waveform-vocal"></div>
-                            <button id="mute-vocal" onclick="toggleMute('vocal')" class="button is-small is-danger mt-2">Mute Vocals</button>
+                            <button id="mute-vocal" onclick="toggleMute('vocal')"
+                                class="button is-small is-danger mt-2">{{ t.mute_vocals }}</button>
                         </div>
                     </div>
                 </div>
-                
+
                 <hr>
                 <div class="columns is-centered">
                     <div class="column is-two-thirds">
-                        <h3 class="title is-4 has-text-centered">Video Feed (Muted)</h3>
+                        <h3 class="title is-4 has-text-centered">{{ t.video_feed }}</h3>
                         <video id="final-video" style="width:100%; border-radius: 8px;" muted></video>
-                        <a id="dl" class="button is-light is-fullwidth mt-4" download>Download MP4</a>
+                        <a id="dl" class="button is-light is-fullwidth mt-4" download>{{ t.dl_mp4 }}</a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <script>
+        const i18n = {{ t | tojson | safe }};
+    </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>

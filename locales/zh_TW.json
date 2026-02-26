@@ -1,0 +1,29 @@
+{
+  "title": "🎤 AI 卡拉OK MV 生成器",
+  "placeholder": "YouTube 網址...",
+  "generate": "產生",
+  "play_all": "播放",
+  "pause_all": "暫停",
+  "instrumental": "伴奏",
+  "vocals": "人聲",
+  "mute_inst": "靜音伴奏",
+  "mute_vocals": "靜音人聲",
+  "unmute": "解除靜音",
+  "video_feed": "影片畫面 (靜音)",
+  "dl_mp4": "下載 MP4",
+  "status": {
+    "fetching_info": "正在獲取影片資訊...",
+    "downloading_audio": "正在從 YouTube 下載音訊...",
+    "downloading_video": "正在從 YouTube 下載影片...",
+    "ai_separation": "AI 音軌分離中 (UVR MDX-Net)...",
+    "merging": "正在合併音訊聲道...",
+    "complete": "完成",
+    "waiting": "在佇列中等待 (順位: {pos})",
+    "processing": "正在處理中...",
+    "not_found": "找不到此任務",
+    "error": "錯誤"
+  },
+  "errors": {
+    "no_url": "請輸入網址"
+  }
+}
