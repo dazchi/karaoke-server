@@ -5,9 +5,16 @@ import threading
 import queue
 import shutil
 from flask import Flask, request, jsonify, render_template, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix # <--- New Import
 from audio_separator.separator import Separator
 
 app = Flask(__name__, template_folder='./')
+
+# --- FIX FOR REVERSE PROXY ---
+# x_proto=1 tells Flask to trust the X-Forwarded-Proto header
+# x_host=1 tells Flask to trust the X-Forwarded-Host header
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+# -----------------------------
 
 # Configuration
 STORAGE_PATH = "songs"
@@ -45,15 +52,21 @@ def worker():
 def process_karaoke_task(job_id, youtube_url, base_url):
     # Stage 1: Metadata
     update_job(job_id, "Fetching video info...")
-    video_id = subprocess.check_output(['yt-dlp', '--get-id', youtube_url]).decode().strip()
+    video_id = subprocess.check_output(['yt-dlp', '--no-playlist', '--get-id', youtube_url]).decode().strip()
     
     input_wav = os.path.join(TMP_DIR, f"{job_id}_in.wav")
     video_only = os.path.join(TMP_DIR, f"{job_id}_v.mp4")
     
     # Stage 2: Downloading
-    update_job(job_id, "Downloading from YouTube...")
-    subprocess.run(['yt-dlp', '-x', '--audio-format', 'wav', '-o', input_wav, youtube_url])
-    subprocess.run(['yt-dlp', '-f', 'bestvideo', '-o', video_only, youtube_url])
+    update_job(job_id, "Downloading audio from YouTube...")
+    result = subprocess.run(['yt-dlp', '--no-playlist', '-x', '--audio-format', 'wav', '-o', input_wav, youtube_url])
+    if result.returncode != 0:
+        raise ValueError("Failed to download audio")
+    
+    update_job(job_id, "Downloading video from YouTube...")
+    result = subprocess.run(['yt-dlp', '--no-playlist', '-f', 'bestvideo', '-o', video_only, youtube_url])
+    if result.returncode != 0:
+        raise ValueError("Failed to download video")
 
     # Stage 3: AI Separation
     update_job(job_id, "AI Separation (UVR MDX-Net)...")
@@ -77,6 +90,7 @@ def process_karaoke_task(job_id, youtube_url, base_url):
     
     ffmpeg_cmd = [
         'ffmpeg', '-y',
+        '-hwaccel', 'cuda',
         '-i', inst_path, '-i', input_wav, '-i', video_only,
         '-filter_complex', "[0:a]pan=mono|c0=c0[left];[1:a]pan=mono|c0=c0[right];[left][right]join=inputs=2:channel_layout=stereo[a]",
         '-map', '2:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', final_path
@@ -110,6 +124,7 @@ def handle_request():
     base_url = request.host_url.rstrip('/')
     
     jobs[job_id] = {"status": "Waiting in queue", "data": {}}
+    print(f'Enquing job with base_url: {base_url}')
     job_queue.put((job_id, url, base_url))
     
     return jsonify({"job_id": job_id})

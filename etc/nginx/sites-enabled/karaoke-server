@@ -1,0 +1,23 @@
+server {
+    listen 80;
+    server_name karaoke.ottermeow.com 192.168.87.104;
+    
+    location /songs {
+        alias /home/darren/karaoke-server/songs;
+        autoindex on;        # Enables the "directory listing" view
+        autoindex_exact_size off;
+        autoindex_localtime on;
+    }
+
+    # 1. Frontend & API Proxy
+     location / {
+         proxy_pass http://127.0.0.1:5000; # Points to your Flask app
+         proxy_set_header Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+         # IMPORTANT: Use the variable from the previous proxy
+         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+     }
+
+}
