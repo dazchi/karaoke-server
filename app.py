@@ -5,6 +5,9 @@ import threading
 import queue
 import shutil
 import json # <--- New Import
+import yt_dlp # <--- New Import for progress tracking
+import re
+import ffmpeg
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from audio_separator.separator import Separator
@@ -72,18 +75,53 @@ def worker():
 
 def process_karaoke_task(job_id, youtube_url, base_url):
     update_job(job_id, "fetching_info")
-    video_id = subprocess.check_output(['yt-dlp', '--no-playlist', '--get-id', youtube_url]).decode().strip()
     
+    # Progress hook for yt-dlp
+    def progress_hook(d):
+        if d['status'] == 'downloading':
+            ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+            p = text_without_colors = ansi_escape.sub('', d.get('_percent_str', '0%').strip()).replace(' ','')
+            current_phase = jobs[job_id].get("status")
+            # Avoid overwriting the phase name, just append/update the percentage
+            update_job(job_id, current_phase, {"percentage": str(p)})
+
+    # Get video ID
+    with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+        info = ydl.extract_info(youtube_url, download=False)
+        video_id = info.get('id', 'video')
+
     input_wav = os.path.join(TMP_DIR, f"{job_id}_in.wav")
     video_only = os.path.join(TMP_DIR, f"{job_id}_v.mp4")
     
-    update_job(job_id, "downloading_audio")
-    result = subprocess.run(['yt-dlp', '--no-playlist', '-x', '--audio-format', 'wav', '-o', input_wav, youtube_url])
-    if result.returncode != 0: raise ValueError("Failed to download audio")
+    # Download Audio
+    update_job(job_id, "downloading_audio", {"percentage": "0%"})
+    ydl_opts_audio = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+        }],
+        'outtmpl': input_wav.replace('.wav', ''), # yt-dlp adds extension
+        'progress_hooks': [progress_hook],
+        'noplaylist': True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts_audio) as ydl:
+        ydl.download([youtube_url])
     
-    update_job(job_id, "downloading_video")
-    result = subprocess.run(['yt-dlp', '--no-playlist', '-f', 'bestvideo', '-o', video_only, youtube_url])
-    if result.returncode != 0: raise ValueError("Failed to download video")
+    # Ensure correct extension if yt-dlp changed it (though wav is forced above)
+    if not os.path.exists(input_wav) and os.path.exists(input_wav + ".wav"):
+        os.rename(input_wav + ".wav", input_wav)
+
+    # Download Video
+    update_job(job_id, "downloading_video", {"percentage": "0%"})
+    ydl_opts_video = {
+        'format': 'bestvideo',
+        'outtmpl': video_only,
+        'progress_hooks': [progress_hook],
+        'noplaylist': True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts_video) as ydl:
+        ydl.download([youtube_url])
 
     update_job(job_id, "ai_separation")
     output_files = separator.separate(input_wav)

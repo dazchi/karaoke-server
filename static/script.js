@@ -31,6 +31,10 @@ function pollStatus(id) {
             statusText = statusText.replace('{pos}', job.position);
         }
 
+        if (job.status === 'downloading_audio' || job.status === 'downloading_video') {
+            statusText = statusText.replace('{percentage}', job.data.percentage);
+        }
+
         document.getElementById('status-text').innerText = statusText;
 
         if (job.status === "complete") {
@@ -43,7 +47,7 @@ function pollStatus(id) {
             document.getElementById('btn').classList.remove('is-loading');
             alert(`${i18n.status.error}: ${job.data.message}`);
         }
-    }, 1000);
+    }, 300);
 }
 
 function showResults(data) {
