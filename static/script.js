@@ -120,9 +120,13 @@ document.getElementById("url").addEventListener("keypress", function (event) {
 setInterval(() => {
     if (isPlaying && waves['inst'] && waves['vocal']) {
         const diff = Math.abs(waves['inst'].getCurrentTime() - waves['vocal'].getCurrentTime());
+        const vidDiff = Math.abs(waves['inst'].getCurrentTime() - videoElem().currentTime);
         if (diff > 0.1) {
             waves['vocal'].setTime(waves['inst'].getCurrentTime());
             videoElem().currentTime = waves['inst'].getCurrentTime();
         }
+        if (vidDiff > 0.1) {
+            videoElem().currentTime = waves['inst'].getCurrentTime();
+        }
     }
-}, 1000);
+}, 500);
