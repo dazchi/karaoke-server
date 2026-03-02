@@ -8,6 +8,7 @@ import json # <--- New Import
 import yt_dlp # <--- New Import for progress tracking
 import re
 import ffmpeg
+import logging
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from audio_separator.separator import Separator
@@ -53,7 +54,10 @@ active_job_id = None
 jobs = {}
 
 print("Loading AI Model...")
-separator = Separator()
+separator = Separator(
+    log_level=logging.INFO,
+    mdx_params={"hop_length": 1024, "segment_size": 256, "overlap": 0.25, "batch_size": 4, "enable_denoise": False}
+)
 separator.load_model('UVR-MDX-NET-Inst_HQ_3.onnx')
 
 def update_job(job_id, status_code, data=None):
@@ -86,7 +90,7 @@ def process_karaoke_task(job_id, youtube_url, base_url):
             update_job(job_id, current_phase, {"percentage": str(p)})
 
     # Get video ID
-    with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+    with yt_dlp.YoutubeDL({'quiet': True, 'noplaylist': True}) as ydl:
         info = ydl.extract_info(youtube_url, download=False)
         video_id = info.get('id', 'video')
 
