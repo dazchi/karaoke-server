@@ -119,7 +119,7 @@ def process_karaoke_task(job_id, youtube_url, base_url):
     # Download Video
     update_job(job_id, "downloading_video", {"percentage": "0%"})
     ydl_opts_video = {
-        'format': 'bestvideo',
+        'format': 'bestvideo[ext=mp4]/bestvideo/best[ext=mp4]/best',
         'outtmpl': video_only,
         'progress_hooks': [progress_hook],
         'noplaylist': True,
